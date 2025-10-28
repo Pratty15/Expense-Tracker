@@ -1,0 +1,54 @@
+.summary-container {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid #374151;
+  color: white;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.summary-cards {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.card-item h3 {
+  color: #d1d5db;
+}
+.card-item p {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.income { color: #10b981; }
+.expense { color: #ef4444; }
+.balance { color: #facc15; }
+
+.target {
+  margin-bottom: 24px;
+  text-align: center;
+}
+.progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  height: 15px;
+  width: 80%;
+  margin: 10px auto;
+  overflow: hidden;
+}
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #22c55e);
+}
+
+@media (max-width: 480px) {
+  .summary-cards {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
+.card {
+  overflow-y: auto;
+}
