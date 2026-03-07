@@ -43,23 +43,23 @@ function MonthlySummary() {
   return (
     <div className="summary-page">
       <div className="summary-header">
-        <h2>📊 Monthly Finance Overview</h2>
+        <h2>Monthly Finance Overview</h2>
         <p>Track your spending & savings smartly</p>
       </div>
 
       <div className="summary-cards">
         <div className="stat-card income-card">
-          <h4>💰 Income</h4>
+          <h4>Income</h4>
           <p>₹{current.income.toFixed(2)}</p>
         </div>
 
         <div className="stat-card expense-card">
-          <h4>💸 Expense</h4>
+          <h4>Expense</h4>
           <p>₹{current.expense.toFixed(2)}</p>
         </div>
 
         <div className="stat-card balance-card">
-          <h4>📦 Balance</h4>
+          <h4>Balance</h4>
           <p>₹{current.balance.toFixed(2)}</p>
         </div>
       </div>
