@@ -7,84 +7,102 @@ function ExpenseTracker() {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
-  // ✅ Fetch existing expenses from backend
-  useEffect(() => {
-    console.log("✅ ExpenseTracker component loaded");
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [editAmount, setEditAmount] = useState("");
 
+  // 🔄 Fetch expenses
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setError("You must log in first.");
+      setError("Please login first");
       return;
     }
 
     fetch("http://localhost:5000/api/expenses", {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => {
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Unauthorized: Please log in again");
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Fetched expenses:", data);
-        if (Array.isArray(data)) {
-          setTransactions(data);
-        } else {
-          setTransactions([]);
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Error fetching expenses:", err);
-        setError(err.message);
-      });
+      .then((res) => res.json())
+      .then((data) => setTransactions(Array.isArray(data) ? data : []))
+      .catch(() => setError("Failed to load expenses"));
   }, []);
 
-  // ✅ Add new expense (POST request)
+  // ➕ Add transaction
   const addTransaction = (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-
     if (!text || !amount) return;
-    if (!token) {
-      setError("Unauthorized. Please log in again.");
-      return;
-    }
-
-    const newTransaction = { text, amount: Number(amount) };
 
     fetch("http://localhost:5000/api/expenses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(newTransaction),
+      body: JSON.stringify({ text, amount: Number(amount) }),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to add expense");
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        console.log("✅ Added:", data);
         setTransactions((prev) => [data, ...prev]);
         setText("");
         setAmount("");
       })
-      .catch((err) => {
-        console.error("❌ Error adding expense:", err);
-        setError(err.message);
-      });
+      .catch(() => setError("Failed to add transaction"));
   };
 
-  // ✅ Calculate income, expense, balance
-  const amounts = transactions.map((t) => t.amount || 0);
-  const income = amounts.filter((a) => a > 0).reduce((a, b) => a + b, 0).toFixed(2);
-  const expense = (amounts.filter((a) => a < 0).reduce((a, b) => a + b, 0) * -1).toFixed(2);
-  const balance = amounts.reduce((a, b) => a + b, 0).toFixed(2);
+  // ✏️ Start edit
+  const startEdit = (t) => {
+    setEditingId(t._id);
+    setEditText(t.text);
+    setEditAmount(t.amount);
+  };
+
+  // 💾 Save edit
+  const saveEdit = (id) => {
+    const token = localStorage.getItem("token");
+
+    fetch(`http://localhost:5000/api/expenses/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        text: editText,
+        amount: Number(editAmount),
+      }),
+    })
+      .then((res) => res.json())
+      .then((updated) => {
+        setTransactions((prev) =>
+          prev.map((t) => (t._id === id ? updated : t))
+        );
+        setEditingId(null);
+      })
+      .catch(() => setError("Failed to update"));
+  };
+
+  // 🗑️ Delete transaction
+  const deleteTransaction = (id) => {
+    const token = localStorage.getItem("token");
+    if (!window.confirm("Delete this transaction?")) return;
+
+    fetch(`http://localhost:5000/api/expenses/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(() =>
+        setTransactions((prev) => prev.filter((t) => t._id !== id))
+      )
+      .catch(() => setError("Failed to delete"));
+  };
+
+  // 📊 Calculations
+  const amounts = transactions.map((t) => t.amount);
+  const income = amounts.filter((a) => a > 0).reduce((a, b) => a + b, 0);
+  const expense =
+    amounts.filter((a) => a < 0).reduce((a, b) => a + b, 0) * -1;
+  const balance = income - expense;
 
   return (
     <div className="page">
@@ -94,11 +112,11 @@ function ExpenseTracker() {
         {error && <p className="error-message">{error}</p>}
 
         <div className="summary">
-          <div className="summary-item">
+          <div>
             <h3>Income</h3>
             <p className="income">₹{income}</p>
           </div>
-          <div className="summary-item">
+          <div>
             <h3>Expense</h3>
             <p className="expense">₹{expense}</p>
           </div>
@@ -111,36 +129,54 @@ function ExpenseTracker() {
 
         <form onSubmit={addTransaction} className="form">
           <input
-            type="text"
-            placeholder="Transaction Description"
+            placeholder="Description"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
           <input
             type="number"
-            placeholder="Amount (use negative for expenses)"
+            placeholder="Amount (negative = expense)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <button type="submit">Add Transaction</button>
+          <button>Add</button>
         </form>
 
         <div className="history">
-          <h3>Transaction History</h3>
-          {transactions.length === 0 ? (
-            <p className="no-transactions">No transactions yet.</p>
-          ) : (
-            <ul>
-              {transactions.map((t) => (
-                <li key={t._id || t.id} className={t.amount < 0 ? "expense-item" : "income-item"}>
-                  <span>{t.text}</span>
-                  <span>
-                    {t.amount < 0 ? "-" : "+"}₹{Math.abs(t.amount)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <h3>Transactions</h3>
+          <ul>
+            {transactions.map((t) => (
+              <li
+                key={t._id}
+                className={t.amount < 0 ? "expense-item" : "income-item"}
+              >
+                {editingId === t._id ? (
+                  <>
+                    <input
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                    />
+                    <button onClick={() => saveEdit(t._id)}>💾</button>
+                    <button onClick={() => setEditingId(null)}>❌</button>
+                  </>
+                ) : (
+                  <>
+                    <span>{t.text}</span>
+                    <span>₹{Math.abs(t.amount)}</span>
+                    <div className="actions">
+                      <button onClick={() => startEdit(t)}>✏️</button>
+                      <button onClick={() => deleteTransaction(t._id)}>🗑️</button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

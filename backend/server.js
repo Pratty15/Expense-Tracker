@@ -4,29 +4,33 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
-dotenv.config(); // ✅ Load environment variables
+import chatbotRoutes from "./routes/chatbot.js";
+
+dotenv.config(); // Load environment variables
 
 const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB connection
+
+//  MongoDB connection
 const uri = process.env.MONGO_URI;
 mongoose
   .connect(uri)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log(" MongoDB connected successfully"))
+  .catch((err) => console.error(" MongoDB connection error:", err));
 
-// ✅ Base route
+//  Base route
 app.get("/", (req, res) => {
-  res.send("🚀 Server is running successfully!");
+  res.send(" Server is running successfully!");
 });
 
-// ✅ API routes
+//  API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
-// ✅ Start server
+//  Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

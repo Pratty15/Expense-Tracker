@@ -4,7 +4,7 @@ import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
 import ExpenseTracker from "./components/ExpenseTracker"; 
 import MonthlySummary from "./components/MonthlySummary";
-import Profile from "./components/Profile"; // ✅ Import Profile
+import Profile from "./components/Profile"; 
 import { useEffect, useState } from "react";
 
 

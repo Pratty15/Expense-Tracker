@@ -6,7 +6,7 @@ import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-// ✅ Signup route
+//  Signup route
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -23,7 +23,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// ✅ Login route
+//  Login route
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -41,7 +41,7 @@ router.post("/login", async (req, res) => {
 });
 
 
-// ✅ Get user profile
+//  Get user profile
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
@@ -52,7 +52,7 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Update password
+//  Update password
 router.put("/update-password", verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

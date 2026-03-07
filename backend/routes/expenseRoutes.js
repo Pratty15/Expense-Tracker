@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// 🔒 Verify Token
+//  Verify Token
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
@@ -19,6 +19,7 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+
 // ➕ Add Expense
 router.post("/", verifyToken, async (req, res) => {
   try {
@@ -30,18 +31,58 @@ router.post("/", verifyToken, async (req, res) => {
       userId: req.userId,
       text,
       amount,
-      createdAt: new Date(), // ✅ ensures correct date for monthly summary
+      createdAt: new Date(), //  ensures correct date for monthly summary
     });
 
     await newExpense.save();
     res.status(201).json(newExpense);
   } catch (error) {
-    console.error("❌ Error saving expense:", error);
+    console.error(" Error saving expense:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// 📜 Get all user expenses
+//  Update expense
+router.put("/:id", verifyToken, async (req, res) => {
+  try {
+    const { text, amount } = req.body;
+
+    const expense = await Expense.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      { text, amount },
+      { new: true }
+    );
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    res.json(expense);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating expense" });
+  }
+});
+
+//  Delete expense
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const expense = await Expense.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    res.json({ message: "Expense deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting expense" });
+  }
+});
+
+
+//  Get all user expenses
 router.get("/", verifyToken, async (req, res) => {
   try {
     const expenses = await Expense.find({ userId: req.userId }).sort({ createdAt: -1 });
@@ -51,10 +92,10 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// 📈 Monthly Summary
+//  Monthly Summary
 router.get("/summary/monthly", verifyToken, async (req, res) => {
   try {
-    console.log("📅 Getting summary for user:", req.userId);
+    console.log(" Getting summary for user:", req.userId);
 
     const summary = await Expense.aggregate([
       {
@@ -81,7 +122,7 @@ router.get("/summary/monthly", verifyToken, async (req, res) => {
       { $sort: { "_id.year": -1, "_id.month": -1 } },
     ]);
 
-    console.log("✅ Aggregated Summary:", summary);
+    console.log(" Aggregated Summary:", summary);
 
     const formatted = summary.map((s) => ({
       month: `${s._id.month}-${s._id.year}`,
@@ -92,9 +133,10 @@ router.get("/summary/monthly", verifyToken, async (req, res) => {
 
     res.json(formatted);
   } catch (err) {
-    console.error("❌ Error generating summary:", err);
+    console.error(" Error generating summary:", err);
     res.status(500).json({ message: "Error generating summary" });
   }
 });
-
 export default router;
+
+

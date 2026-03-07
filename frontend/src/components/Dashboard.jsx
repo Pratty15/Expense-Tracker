@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import FinanceBot from "./FinanceBot";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -63,6 +64,9 @@ function Dashboard() {
           <Legend />
         </PieChart>
       </div>
+
+       {/* 🤖 Chatbot */}
+      <FinanceBot />
     </div>
   );
 }
