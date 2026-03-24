@@ -19,7 +19,7 @@ function MonthlySummary() {
     const token = localStorage.getItem("token");
 
     const fetchSummary = () => {
-      fetch("http://localhost:5000/api/expenses/summary/monthly", {
+      fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses/summary/monthly", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -65,7 +65,7 @@ function MonthlySummary() {
       </div>
 
       <div className="target-section">
-        <h3>🎯 Savings Target</h3>
+        <h3> Savings Target</h3>
 
         <div className="target-input">
           <span>₹</span>

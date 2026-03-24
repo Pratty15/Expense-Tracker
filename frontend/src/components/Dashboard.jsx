@@ -13,7 +13,7 @@ function Dashboard() {
     const fetchExpenses = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/expenses", {
+        const res = await fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
