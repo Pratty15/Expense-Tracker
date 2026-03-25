@@ -11,7 +11,7 @@ dotenv.config(); // Load environment variables
 const app = express();
 // Middleware
 app.use(cors({
-  origin: "https://expense-tracker-djucno0h9-pratyush-manas-projects.vercel.app",
+  origin: "https://expense-tracker-nine-black-67.vercel.app",
   credentials: true
 }));
 app.use(express.json());
