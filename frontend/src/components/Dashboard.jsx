@@ -21,7 +21,7 @@ function Dashboard() {
 
         const data = await res.json();
 
-        // ✅ Convert transactions into chart data
+        //  Convert transactions into chart data
         const chartData = data.map((item) => ({
           category: item.text, // or add a 'category' field later
           amount: Math.abs(item.amount),
