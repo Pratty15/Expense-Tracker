@@ -1,149 +1,100 @@
 import { Router } from "express";
-import Expense from "../models/Expense.js";
 import verifyToken from "../middleware/verifyToken.js";
+import { processMessage } from "../services/chatbotService.js";
 
 const router = Router();
 
-/*  In-memory context (per user) */
-const userContext = {};
+/* ─────────────────────────────────────────────
+   Simple In-Memory Rate Limiter
+   Max 30 messages per minute per user
+   ───────────────────────────────────────────── */
+
+const rateLimitMap = new Map();
+const MAX_REQUESTS = 30;
+const WINDOW_MS = 60 * 1000;
+
+function isRateLimited(userId) {
+  const now = Date.now();
+  const userKey = userId.toString();
+
+  if (!rateLimitMap.has(userKey)) {
+    rateLimitMap.set(userKey, []);
+  }
+
+  const timestamps = rateLimitMap
+    .get(userKey)
+    .filter((t) => now - t < WINDOW_MS);
+
+  rateLimitMap.set(userKey, timestamps);
+
+  if (timestamps.length >= MAX_REQUESTS) {
+    return true;
+  }
+
+  timestamps.push(now);
+  return false;
+}
+
+/* ─────────────────────────────────────────────
+   POST /api/chatbot
+   ───────────────────────────────────────────── */
 
 router.post("/", verifyToken, async (req, res) => {
   try {
     const { message } = req.body;
-    const userId = req.userId;
 
-    if (!userContext[userId]) {
-      userContext[userId] = {
-        lastIntent: null,
-      };
+    // ── Input validation ───────────────────
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({
+        reply: "Please send a valid message.",
+        type: "error",
+        data: null,
+      });
     }
 
-    const msg = message.toLowerCase();
+    const trimmed = message.trim();
 
-    const expenses = await Expense.find({ userId });
-
-    const income = expenses
-      .filter(e => e.amount > 0)
-      .reduce((a, b) => a + b.amount, 0);
-
-    const expense = Math.abs(
-      expenses.filter(e => e.amount < 0).reduce((a, b) => a + b.amount, 0)
-    );
-
-    const balance = income - expense;
-
-    const daysPassed = new Date().getDate();
-    const avgPerDay = expense / (daysPassed || 1);
-    const predicted = Math.round(avgPerDay * 30);
-
-    let reply = "";
-    let intent = null;
-
-    /* GREETINGS */
-    if (/(hi|hello|hey|namaste)/.test(msg)) {
-      reply = "👋 Hey! Ask me about your expenses, balance, or savings.";
-      intent = "greeting";
+    if (trimmed.length === 0) {
+      return res.status(400).json({
+        reply: "Message cannot be empty.",
+        type: "error",
+        data: null,
+      });
     }
 
-    /*  SUMMARY */
-    else if (
-      msg.includes("summary") ||
-      msg.includes("overview") ||
-      msg.includes("iss month") ||
-      msg.includes("haal")
-    ) {
-      reply = ` This month:\nIncome: ₹${income}\nExpense: ₹${expense}\nBalance: ₹${balance}`;
-      intent = "summary";
+    if (trimmed.length > 500) {
+      return res.status(400).json({
+        reply: "Message is too long. Please keep it under 500 characters.",
+        type: "error",
+        data: null,
+      });
     }
 
-    /*  EXPENSE */
-    else if (
-      msg.includes("expense") ||
-      msg.includes("spent") ||
-      msg.includes("kharcha")
-    ) {
-      reply = ` You’ve spent ₹${expense} so far this month.`;
-      intent = "expense";
+    // ── Rate limiting ──────────────────────
+    if (isRateLimited(req.userId)) {
+      return res.status(429).json({
+        reply: "You're sending messages too quickly. Please wait a moment and try again.",
+        type: "error",
+        data: null,
+      });
     }
 
-    /*  BALANCE */
-    else if (
-      msg.includes("balance") ||
-      msg.includes("bacha") ||
-      msg.includes("left")
-    ) {
-      reply = ` Your current balance is ₹${balance}.`;
-      intent = "balance";
-    }
+    // ── Process message ────────────────────
+    const result = await processMessage(req.userId, trimmed);
 
-    /*  PREDICTION */
-    else if (
-      msg.includes("future") ||
-      msg.includes("end of month") ||
-      msg.includes("predict")
-    ) {
-      reply = ` At this pace, your month-end expense may reach around ₹${predicted}.`;
-      intent = "prediction";
-    }
-
-    /*  BUDGET WARNING */
-    else if (
-      msg.includes("budget") ||
-      msg.includes("limit") ||
-      msg.includes("control")
-    ) {
-      const BUDGET = 10000;
-      if (expense > BUDGET * 0.8) 
-        {
-        reply = ` Alert! You’ve used ${Math.round(
-          (expense / BUDGET) * 100
-        )}% of your budget.`;
-      } 
-      else {
-        reply = ` You’re within budget. Keep it up!`;
-      }
-      intent = "budget";
-    }
-
-    /*  FOLLOW-UP UNDERSTANDING */
-    else if (
-      msg.includes("how much") &&
-      userContext[userId].lastIntent === "summary"
-    ) {
-      reply = ` From your summary, expense is ₹${expense} and balance ₹${balance}.`;
-      intent = "followup";
-    }
-
-    /* ADVICE */
-    else if (
-      msg.includes("save") ||
-      msg.includes("tip") ||
-      msg.includes("advice")
-    ) {
-      reply =
-        expense > income
-          ? " You’re spending more than you earn. Try cutting non-essential expenses."
-          : " Save at least 20% of your income & track daily spending.";
-      intent = "advice";
-    }
-
-    /*  SMART FALLBACK */
-    else {
-      const fallbacks = [
-        " I didn’t get that. Try asking about expenses, balance, or prediction.",
-        " Ask me things like: *How much did I spend?*",
-        " I can show summaries, trends, and budget alerts.",
-      ];
-      reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-      intent = "unknown";
-    }
-
-    userContext[userId].lastIntent = intent;
-
-    res.json({ reply });
+    res.json({
+      reply: result.reply,
+      type: result.type || "text",
+      data: result.data || null,
+    });
   } catch (err) {
-    console.error(" Chatbot Error:", err);
-    res.status(500).json({ message: "Chatbot server error" });
+    console.error("Chatbot Error:", err);
+
+    res.status(500).json({
+      reply: "Sorry, something went wrong on my end. Please try again in a moment.",
+      type: "error",
+      data: null,
+    });
   }
 });
 

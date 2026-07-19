@@ -1,0 +1,83 @@
+.shared-expense-container{
+    margin-top:25px;
+    background:#111827;
+    padding:25px;
+    border-radius:15px;
+    border:1px solid #374151;
+}
+
+.shared-expense-container h3{
+    color:#10b981;
+    margin-bottom:20px;
+}
+
+.shared-form{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.shared-form input,
+.shared-form select{
+
+    width:100%;
+    padding:12px;
+    border:none;
+    outline:none;
+    border-radius:10px;
+    background:#1f2937;
+    color:white;
+    border:1px solid #374151;
+}
+
+.shared-form input::placeholder{
+    color:#9ca3af;
+}
+
+.add-expense-btn{
+
+    background:#10b981;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.3s;
+    padding:12px;
+}
+
+.add-expense-btn:hover{
+
+    background:#059669;
+
+}
+
+.split-preview{
+
+    margin-top:25px;
+    padding:20px;
+    background:#1f2937;
+    border-radius:12px;
+    border:1px solid #374151;
+}
+
+.split-preview h4{
+
+    margin-bottom:10px;
+    color:#facc15;
+}
+
+.split-preview strong{
+
+    color:#10b981;
+    font-size:18px;
+}
+
+@media(max-width:768px){
+
+.shared-form{
+
+grid-template-columns:1fr;
+
+}
+
+}

@@ -1,62 +1,87 @@
-.dashboard-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #111827;
-  padding: 16px;
-  box-sizing: border-box;
+.dashboard-page{
+    min-height:100vh;
+    background:#111827;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
 }
 
-.dashboard-card {
-  background: #1f2937;
-  padding: 32px;
-  border-radius: 16px;
-  max-width: 450px;
-  width: 100%;
-  color: white;
-  border: 1px solid #374151;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.dashboard-card{
+    width:900px;
+    max-width:100%;
+    background:#1f2937;
+    border-radius:18px;
+    padding:30px;
+    color:white;
+    border:1px solid #374151;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 
-.dashboard-title {
-  text-align: center;
-  font-size: 2rem;
-  color: #10b981;
-  margin-bottom: 24px;
-}
-.dashboard-page {
-  display: flex;               /* Flex container */
-  justify-content: center;     /* Horizontal center */
-  align-items: center;         /* Vertical center */
-  min-height: 100vh;
-  background: #111827;
-  padding: 16px;
-  box-sizing: border-box;
+.dashboard-title{
+    font-size:2rem;
+    margin-bottom:25px;
+    color:#10b981;
 }
 
-.dashboard-card {
-  background: #1f2937;
-  padding: 32px;
-  border-radius: 16px;
-  max-width: 450px;
-  width: 100%;
-  color: white;
-  border: 1px solid #374151;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+.dashboard-buttons{
+    margin-top:30px;
 
-  /* Center content inside card */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:18px;
+
+    width:100%;
 }
 
-.dashboard-title {
-  text-align: center;
-  font-size: 2rem;
-  color: #10b981;
-  margin-bottom: 24px;
+.dashboard-buttons button{
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#374151;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.dashboard-buttons button:hover{
+
+    background:#10b981;
+
+    transform:translateY(-3px);
+}
+
+.recharts-wrapper{
+
+    margin:auto;
+}
+
+@media(max-width:700px){
+
+.dashboard-buttons{
+
+grid-template-columns:1fr;
+
+}
+
+.dashboard-card{
+
+padding:20px;
+
+}
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import FinanceBot from "./FinanceBot";
 import "./Dashboard.css";
@@ -7,29 +8,43 @@ function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+  const navigate = useNavigate();
+
+  const COLORS = [
+    "#10b981",
+    "#3b82f6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#06b6d4",
+  ];
 
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+
+        const res = await fetch(
+          "https://expense-tracker-backend-oy00.onrender.com/api/expenses",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!res.ok) throw new Error("Failed to fetch expenses");
 
         const data = await res.json();
 
-        //  Convert transactions into chart data
         const chartData = data.map((item) => ({
-          category: item.text, // or add a 'category' field later
+          category: item.text,
           amount: Math.abs(item.amount),
         }));
 
         setExpenses(chartData);
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.log(err);
       } finally {
         setLoading(false);
       }
@@ -38,34 +53,62 @@ function Dashboard() {
     fetchExpenses();
   }, []);
 
-  if (loading) return <h3>Loading data...</h3>;
-  if (expenses.length === 0) return <h3>No expenses found</h3>;
+  if (loading) return <h2>Loading...</h2>;
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-card">
-        <h2 className="dashboard-title">Dashboard</h2>
-        <PieChart width={400} height={300}>
-          <Pie
-            data={expenses}
-            dataKey="amount"
-            nameKey="category"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            fill="#8884d8"
-            label
-          >
-            {expenses.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+        <h2 className="dashboard-title">
+          Personal Finance Dashboard
+        </h2>
+
+        {expenses.length > 0 ? (
+          <PieChart width={380} height={300}>
+            <Pie
+              data={expenses}
+              dataKey="amount"
+              nameKey="category"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              label
+            >
+              {expenses.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
+
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        ) : (
+          <p>No expense data found.</p>
+        )}
+
+        <div className="dashboard-buttons">
+
+          <button onClick={() => navigate("/tracker")}>
+            Expense Tracker
+          </button>
+
+          <button onClick={() => navigate("/summary")}>
+            Monthly Summary
+          </button>
+
+          <button onClick={() => navigate("/groups")}>
+            Groups
+          </button>
+
+          <button onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+
+        </div>
       </div>
 
-       {/* 🤖 Chatbot */}
       <FinanceBot />
     </div>
   );

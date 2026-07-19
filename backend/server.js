@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import chatbotRoutes from "./routes/chatbot.js";
+import groupRoutes from "./routes/groupRoutes.js";
+import sharedExpenseRoutes from "./routes/sharedExpenseRoutes.js";
 
 dotenv.config();
 
@@ -42,6 +44,8 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/shared-expenses", sharedExpenseRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server Running");
