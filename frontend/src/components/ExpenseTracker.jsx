@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API_BASE from "../config/api";
 import "./ExpenseTracker.css";
 
 function ExpenseTracker() {
@@ -19,7 +20,7 @@ function ExpenseTracker() {
       return;
     }
 
-    fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses", {
+    fetch(`${API_BASE}/api/expenses`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -33,7 +34,7 @@ function ExpenseTracker() {
     const token = localStorage.getItem("token");
     if (!text || !amount) return;
 
-    fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses", {
+    fetch(`${API_BASE}/api/expenses`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,7 +62,7 @@ function ExpenseTracker() {
   const saveEdit = (id) => {
     const token = localStorage.getItem("token");
 
-    fetch(`https://expense-tracker-backend-oy00.onrender.com/api/expenses/${id}`, {
+    fetch(`${API_BASE}/api/expenses/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -87,7 +88,7 @@ function ExpenseTracker() {
     const token = localStorage.getItem("token");
     if (!window.confirm("Delete this transaction?")) return;
 
-    fetch(`https://expense-tracker-backend-oy00.onrender.com/api/expenses/${id}`, {
+    fetch(`${API_BASE}/api/expenses/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })

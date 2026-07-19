@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API_BASE from "../config/api";
 import "./SharedExpense.css";
 
 function SharedExpense({
@@ -36,7 +37,7 @@ function SharedExpense({
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/shared-expenses",
+        `${API_BASE}/api/shared-expenses`,
         {
           method: "POST",
           headers: {

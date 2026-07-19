@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import API_BASE from "../config/api";
 import SharedExpense from "./SharedExpense";
 import Settlement from "./Settlement";
 import Analytics from "./Analytics";
@@ -23,7 +24,7 @@ function GroupDetails() {
   const fetchGroup = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/groups/${id}`,
+        `${API_BASE}/api/groups/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -42,7 +43,7 @@ function GroupDetails() {
   const fetchExpenses = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/shared-expenses/group/${id}`,
+        `${API_BASE}/api/shared-expenses/group/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

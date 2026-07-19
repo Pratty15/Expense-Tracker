@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import API_BASE from "../config/api";
 import "./FinanceBot.css";
-
-/* ─────────────────────────────────────────────
-   API Base URL
-   ───────────────────────────────────────────── */
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "https://expense-tracker-backend-oy00.onrender.com";
 
 /* ─────────────────────────────────────────────
    Speech Recognition Setup

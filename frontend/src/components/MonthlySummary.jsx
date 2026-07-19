@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_BASE from "../config/api";
 import {
   LineChart,
   Line,
@@ -19,7 +20,7 @@ function MonthlySummary() {
     const token = localStorage.getItem("token");
 
     const fetchSummary = () => {
-      fetch("https://expense-tracker-backend-oy00.onrender.com/api/expenses/summary/monthly", {
+      fetch(`${API_BASE}/api/expenses/summary/monthly`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())

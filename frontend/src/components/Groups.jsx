@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../config/api";
 import "./Groups.css";
 
 function Groups() {
@@ -19,7 +20,7 @@ function Groups() {
 
   const fetchGroups = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/groups", {
+      const res = await fetch(`${API_BASE}/api/groups`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -55,7 +56,7 @@ function Groups() {
     if (!groupName.trim()) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/groups", {
+      const res = await fetch(`${API_BASE}/api/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +82,7 @@ function Groups() {
 
   const deleteGroup = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/groups/${id}`, {
+      await fetch(`${API_BASE}/api/groups/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

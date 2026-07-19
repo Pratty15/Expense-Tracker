@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import API_BASE from "../config/api";
 import FinanceBot from "./FinanceBot";
 import "./Dashboard.css";
 
@@ -25,7 +26,7 @@ function Dashboard() {
         const token = localStorage.getItem("token");
 
         const res = await fetch(
-          "https://expense-tracker-backend-oy00.onrender.com/api/expenses",
+          `${API_BASE}/api/expenses`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

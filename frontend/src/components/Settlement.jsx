@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import API_BASE from "../config/api";
 import "./Settlement.css";
 
 function Settlement({ expenses }) {
@@ -36,7 +37,7 @@ function Settlement({ expenses }) {
       setLoadingId(expenseId + participantName);
 
       const res = await fetch(
-        `http://localhost:5000/api/shared-expenses/${expenseId}/pay/${participantName}`,
+        `${API_BASE}/api/shared-expenses/${expenseId}/pay/${participantName}`,
         {
           method: "PUT",
           headers: {

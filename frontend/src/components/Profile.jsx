@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_BASE from "../config/api";
 import "./Profile.css";
 
 function Profile() {
@@ -9,7 +10,7 @@ function Profile() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("https://expense-tracker-backend-oy00.onrender.com/api/auth/me", {
+    fetch(`${API_BASE}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -21,7 +22,7 @@ function Profile() {
     e.preventDefault();
     const token = localStorage.getItem("token");
 
-    fetch("https://expense-tracker-backend-oy00.onrender.com/api/auth/update-password", {
+    fetch(`${API_BASE}/api/auth/update-password`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
