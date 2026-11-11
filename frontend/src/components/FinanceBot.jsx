@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import API_BASE from "../config/api";
 import "./FinanceBot.css";
 
@@ -18,191 +20,65 @@ if (SpeechRecognition) {
 }
 
 /* ─────────────────────────────────────────────
-   Quick Suggestion Chips
+   Natural Suggestion Chips
    ───────────────────────────────────────────── */
 const suggestions = [
-  "Summary",
-  "Balance",
-  "Expenses",
-  "Groups",
-  "Settlements",
-  "Analytics",
-  "Prediction",
-  "Categories",
-  "Finance Tip",
+  "How am I doing?",
+  "Where am I spending most?",
+  "Compare with last month",
+  "Predict month-end",
+  "Pending settlements",
+  "Savings tips",
+  "My groups",
 ];
 
 /* ─────────────────────────────────────────────
-   Formatting helper
+   Word-by-Word Typing Component
    ───────────────────────────────────────────── */
-function rupees(n) {
-  return `₹${Number(n).toLocaleString("en-IN")}`;
-}
+function TypingMarkdown({ text, onComplete }) {
+  const [visibleLength, setVisibleLength] = useState(0);
+  const intervalRef = useRef(null);
 
-/* ─────────────────────────────────────────────
-   Rich Card Components
-   ───────────────────────────────────────────── */
+  useEffect(() => {
+    setVisibleLength(0);
 
-function SummaryCard({ data }) {
-  if (!data) return null;
+    // Speed: ~20ms per character for a fast, smooth feel
+    const speed = 12;
+    let current = 0;
 
-  const total = data.income + data.expense;
-  const pct = total > 0 ? Math.round((data.expense / total) * 100) : 0;
+    intervalRef.current = setInterval(() => {
+      current += 3; // 3 chars at a time for speed
+      if (current >= text.length) {
+        current = text.length;
+        clearInterval(intervalRef.current);
+        onComplete?.();
+      }
+      setVisibleLength(current);
+    }, speed);
 
-  return (
-    <div className="summary-card">
-      <div className="stat-grid">
-        <div className="stat-item">
-          <span className="stat-label">Income</span>
-          <span className="stat-value income">{rupees(data.income)}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Expense</span>
-          <span className="stat-value expense">{rupees(data.expense)}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Balance</span>
-          <span className="stat-value balance">{rupees(data.balance)}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Groups</span>
-          <span className="stat-value">{data.groups}</span>
-        </div>
-      </div>
-      {data.income > 0 && (
-        <div className="progress-bar-container">
-          <div
-            className="progress-bar-fill"
-            style={{ width: `${Math.min(pct, 100)}%` }}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
+    return () => clearInterval(intervalRef.current);
+  }, [text]);
 
-function PredictionCard({ data }) {
-  if (!data) return null;
-
-  const gaugeColor =
-    data.healthScore >= 70
-      ? "#10b981"
-      : data.healthScore >= 40
-        ? "#f59e0b"
-        : "#ef4444";
+  const visibleText = text.slice(0, visibleLength);
 
   return (
-    <div className="prediction-card">
-      <div className="health-gauge">
-        <div
-          className="gauge-ring"
-          style={{
-            "--gauge-color": gaugeColor,
-            "--gauge-pct": data.healthScore,
-          }}
-        >
-          <span className="gauge-score">{data.healthScore}</span>
-        </div>
-        <div className="gauge-label">
-          <strong>Financial Health</strong>
-          {data.healthScore >= 70
-            ? "Looking great!"
-            : data.healthScore >= 40
-              ? "Room for improvement"
-              : "Needs attention"}
-        </div>
-      </div>
-      <div className="pred-stats">
-        <div className="pred-stat">
-          <span>Est. Expense</span>
-          <strong>{rupees(data.predictedExpense)}</strong>
-        </div>
-        <div className="pred-stat">
-          <span>Est. Savings</span>
-          <strong>{rupees(data.predictedSavings)}</strong>
-        </div>
-        <div className="pred-stat">
-          <span>Daily Avg</span>
-          <strong>{rupees(data.averageDailyExpense)}</strong>
-        </div>
-        <div className="pred-stat">
-          <span>Budget Used</span>
-          <strong>{data.budgetUsed}%</strong>
-        </div>
-      </div>
-      {data.trend && (
-        <div className="pred-trend">{data.trend}</div>
-      )}
-      {data.advice && (
-        <div className="pred-advice">💡 {data.advice}</div>
-      )}
-    </div>
-  );
-}
-
-function TipCard({ data }) {
-  if (!data) return null;
-  return (
-    <div className="tip-card">
-      <div className="tip-header">{data.title}</div>
-      <div className="tip-body">{data.message}</div>
-      {data.category && (
-        <span className="tip-category-badge">{data.category}</span>
-      )}
-    </div>
-  );
-}
-
-function ChartCard({ data }) {
-  if (!data?.categories?.length) return null;
-
-  const maxAmount = Math.max(...data.categories.map((c) => c.amount));
-
-  return (
-    <div className="chart-card">
-      <div className="chart-bars">
-        {data.categories.slice(0, 5).map((cat) => (
-          <div className="chart-bar-row" key={cat.name}>
-            <span className="chart-bar-label">{cat.name}</span>
-            <div className="chart-bar-track">
-              <div
-                className="chart-bar-fill"
-                style={{
-                  width: `${maxAmount > 0 ? (cat.amount / maxAmount) * 100 : 0}%`,
-                }}
-              />
-            </div>
-            <span className="chart-bar-value">{rupees(cat.amount)}</span>
-          </div>
-        ))}
-      </div>
+    <div className="md-content">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {visibleText}
+      </ReactMarkdown>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────
-   Message Bubble Renderer
+   Static Markdown Renderer (for completed messages)
    ───────────────────────────────────────────── */
-function MessageBubble({ msg }) {
+function MarkdownBubble({ text }) {
   return (
-    <div className={`message ${msg.from}`}>
-      <div className="bubble">{msg.text}</div>
-
-      {/* Rich cards for bot messages */}
-      {msg.from === "bot" && msg.msgType === "summary_card" && (
-        <SummaryCard data={msg.data} />
-      )}
-      {msg.from === "bot" && msg.msgType === "prediction_card" && (
-        <PredictionCard data={msg.data} />
-      )}
-      {msg.from === "bot" && msg.msgType === "tip_card" && (
-        <TipCard data={msg.data} />
-      )}
-      {msg.from === "bot" && msg.msgType === "chart_data" && (
-        <ChartCard data={msg.data} />
-      )}
-
-      <span className="time">{msg.time}</span>
+    <div className="md-content">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }
@@ -213,85 +89,66 @@ function MessageBubble({ msg }) {
 function FinanceBot() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [activeChip, setActiveChip] = useState(null);
 
   const [messages, setMessages] = useState([
     {
+      id: "welcome",
       from: "bot",
-      text: "Hey there! 👋 I'm your AI Finance Assistant.\n\nAsk me anything about your finances — expenses, balance, predictions, tips, and more!",
-      msgType: "text",
-      data: null,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      text: "Hey! 👋 I'm your **AI Finance Assistant**, powered by Gemini.\n\nI know your expenses, income, groups & settlements. Ask me anything naturally — like talking to a friend who's great with money!\n\nTry: *\"How am I doing this month?\"*",
+      type: "ai",
+      isComplete: true,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
 
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
+  const [thinking, setThinking] = useState(false);
   const [listening, setListening] = useState(false);
 
   const endRef = useRef(null);
   const inputRef = useRef(null);
+  const msgIdCounter = useRef(1);
 
-  // Auto-scroll to latest message
+  // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, thinking]);
 
-  // Focus input when chat opens
+  // Focus input on open
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 400);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 400);
   }, [open]);
 
   // Esc to close
   useEffect(() => {
-    function handleEsc(e) {
-      if (e.key === "Escape" && open) {
-        handleClose();
-      }
-    }
+    const handleEsc = (e) => {
+      if (e.key === "Escape" && open) handleClose();
+    };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [open]);
 
-  /* ── Open / Close with animation ──────────── */
-  const handleOpen = () => {
-    setClosing(false);
-    setOpen(true);
-  };
-
+  /* ── Open / Close ─────────────────────────── */
   const handleClose = () => {
     setClosing(true);
-    setTimeout(() => {
-      setOpen(false);
-      setClosing(false);
-    }, 250); // matches CSS slideDownOut duration
+    setTimeout(() => { setOpen(false); setClosing(false); }, 250);
   };
 
   const toggleChat = () => {
     if (open) handleClose();
-    else handleOpen();
+    else { setClosing(false); setOpen(true); }
   };
 
   /* ── Clear chat ───────────────────────────── */
   const clearChat = () => {
-    setMessages([
-      {
-        from: "bot",
-        text: "Chat cleared! 🧹 How can I help you?",
-        msgType: "text",
-        data: null,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
-    setActiveChip(null);
+    setMessages([{
+      id: "cleared",
+      from: "bot",
+      text: "Chat cleared! 🧹 How can I help you?",
+      type: "ai",
+      isComplete: true,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }]);
   };
 
   /* ── Voice input ──────────────────────────── */
@@ -300,7 +157,6 @@ function FinanceBot() {
       alert("Voice Recognition is not supported in this browser.");
       return;
     }
-
     recognition.start();
     setListening(true);
 
@@ -316,32 +172,34 @@ function FinanceBot() {
     recognition.onend = () => setListening(false);
   };
 
+  /* ── Auto-resize textarea ─────────────────── */
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    const el = e.target;
+    el.style.height = "40px";
+    el.style.height = Math.min(el.scrollHeight, 100) + "px";
+  };
+
   /* ── Send message ─────────────────────────── */
   const sendMessage = useCallback(
     async (customMessage = null) => {
       const message = customMessage || input;
       if (!message.trim()) return;
 
-      const now = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const userMsgId = `user-${msgIdCounter.current++}`;
+      const botMsgId = `bot-${msgIdCounter.current++}`;
 
       // Add user message
       setMessages((prev) => [
         ...prev,
-        { from: "user", text: message, msgType: "text", data: null, time: now },
+        { id: userMsgId, from: "user", text: message, type: "text", isComplete: true, time: now },
       ]);
 
       setInput("");
-      setTyping(true);
-
-      // Track active chip
-      if (customMessage) {
-        setActiveChip(customMessage);
-      } else {
-        setActiveChip(null);
-      }
+      // Reset textarea height
+      if (inputRef.current) inputRef.current.style.height = "40px";
+      setThinking(true);
 
       try {
         const res = await fetch(`${API_BASE}/api/chatbot`, {
@@ -355,36 +213,31 @@ function FinanceBot() {
 
         const data = await res.json();
 
-        // Small delay for natural feel
-        setTimeout(() => {
-          setTyping(false);
-          setMessages((prev) => [
-            ...prev,
-            {
-              from: "bot",
-              text: data.reply || "I couldn't understand that.",
-              msgType: data.type || "text",
-              data: data.data || null,
-              time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            },
-          ]);
-        }, 600);
-      } catch {
-        setTyping(false);
+        setThinking(false);
+
+        // Add bot response (starts typing animation)
         setMessages((prev) => [
           ...prev,
           {
+            id: botMsgId,
             from: "bot",
-            text: "Sorry! Something went wrong while connecting to the server. Please try again.",
-            msgType: "error",
-            data: null,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+            text: data.reply || "Sorry, I couldn't understand that.",
+            type: data.type || "text",
+            isComplete: false, // will animate
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+      } catch {
+        setThinking(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: botMsgId,
+            from: "bot",
+            text: "Sorry! Something went wrong connecting to the server. Please try again.",
+            type: "text",
+            isComplete: true,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           },
         ]);
       }
@@ -392,12 +245,27 @@ function FinanceBot() {
     [input]
   );
 
+  /* ── Mark message typing as complete ──────── */
+  const markComplete = useCallback((msgId) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, isComplete: true } : m))
+    );
+  }, []);
+
+  /* ── Handle key press in textarea ─────────── */
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   /* ── Render ────────────────────────────────── */
   return (
     <>
       {/* Floating Button */}
       <div className="chatbot-btn" onClick={toggleChat}>
-        {open ? "✕" : "🤖"}
+        {open ? "✕" : "✨"}
       </div>
 
       {open && (
@@ -405,25 +273,19 @@ function FinanceBot() {
           {/* ── Header ─────────────────────── */}
           <div className="chatbot-header">
             <div>
-              <h3>Finance AI</h3>
+              <h3>
+                Finance AI <span className="header-badge">Gemini</span>
+              </h3>
               <span className="online">
                 <span className="online-dot" />
-                Online
+                Powered by Gemini 3.5 Flash
               </span>
             </div>
             <div className="header-actions">
-              <button
-                className="clear-btn"
-                onClick={clearChat}
-                title="Clear chat"
-              >
+              <button className="clear-btn" onClick={clearChat} title="Clear chat">
                 🗑️
               </button>
-              <button
-                className="close-btn"
-                onClick={handleClose}
-                title="Close (Esc)"
-              >
+              <button className="close-btn" onClick={handleClose} title="Close (Esc)">
                 ✕
               </button>
             </div>
@@ -432,11 +294,7 @@ function FinanceBot() {
           {/* ── Suggestion Chips ────────────── */}
           <div className="suggestions">
             {suggestions.map((item, index) => (
-              <button
-                key={index}
-                className={activeChip === item ? "active-chip" : ""}
-                onClick={() => sendMessage(item)}
-              >
+              <button key={index} onClick={() => sendMessage(item)}>
                 {item}
               </button>
             ))}
@@ -444,17 +302,41 @@ function FinanceBot() {
 
           {/* ── Messages ───────────────────── */}
           <div className="chatbot-messages">
-            {messages.map((msg, index) => (
-              <MessageBubble key={index} msg={msg} />
+            {messages.map((msg) => (
+              <div className={`message-row ${msg.from}`} key={msg.id}>
+                {/* Avatar */}
+                <div className={`msg-avatar ${msg.from === "bot" ? "bot-avatar" : "user-avatar"}`}>
+                  {msg.from === "bot" ? "✨" : "👤"}
+                </div>
+
+                {/* Content */}
+                <div className="message-content">
+                  <div className="bubble">
+                    {msg.from === "bot" && (msg.type === "ai" || msg.type === "text" || msg.type === "error") ? (
+                      msg.isComplete ? (
+                        <MarkdownBubble text={msg.text} />
+                      ) : (
+                        <TypingMarkdown
+                          text={msg.text}
+                          onComplete={() => markComplete(msg.id)}
+                        />
+                      )
+                    ) : (
+                      msg.text
+                    )}
+                  </div>
+                  <span className="time">{msg.time}</span>
+                </div>
+              </div>
             ))}
 
-            {/* Shimmer Loading Skeleton */}
-            {typing && (
-              <div className="typing-container">
-                <div className="shimmer-loader">
-                  <div className="shimmer-line" />
-                  <div className="shimmer-line" />
-                  <div className="shimmer-line" />
+            {/* Thinking Indicator */}
+            {thinking && (
+              <div className="thinking-container">
+                <div className="msg-avatar bot-avatar">✨</div>
+                <div className="thinking-bubble">
+                  <span className="thinking-sparkle">✨</span>
+                  <span className="thinking-text">Thinking...</span>
                 </div>
               </div>
             )}
@@ -462,20 +344,20 @@ function FinanceBot() {
             <div ref={endRef} />
           </div>
 
-          {/* ── Esc Hint ───────────────────── */}
-          <div className="esc-hint">
-            Press <kbd>Esc</kbd> to close
+          {/* ── Footer ─────────────────────── */}
+          <div className="powered-by">
+            Press <kbd>Esc</kbd> to close · <kbd>Shift+Enter</kbd> for new line
           </div>
 
           {/* ── Input Bar ──────────────────── */}
           <div className="chatbot-input">
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               placeholder="Ask anything about your finances..."
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
             />
 
             <button

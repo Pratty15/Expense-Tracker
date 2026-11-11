@@ -1,5 +1,6 @@
 import { Router } from "express";
 import verifyToken from "../middleware/verifyToken.js";
+import { processWithGemini, isGeminiAvailable } from "../services/geminiService.js";
 import { processMessage } from "../services/chatbotService.js";
 
 const router = Router();
@@ -37,6 +38,7 @@ function isRateLimited(userId) {
 
 /* ─────────────────────────────────────────────
    POST /api/chatbot
+   Gemini-first with rule-based fallback
    ───────────────────────────────────────────── */
 
 router.post("/", verifyToken, async (req, res) => {
@@ -79,7 +81,23 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // ── Process message ────────────────────
+    // ── Try Gemini first ───────────────────
+    if (isGeminiAvailable()) {
+      try {
+        const result = await processWithGemini(req.userId, trimmed);
+
+        return res.json({
+          reply: result.reply,
+          type: result.type || "ai",
+          data: result.data || null,
+        });
+      } catch (geminiErr) {
+        console.error("Gemini failed, falling back to rule-based:", geminiErr.message);
+        // Fall through to rule-based below
+      }
+    }
+
+    // ── Fallback: rule-based bot ───────────
     const result = await processMessage(req.userId, trimmed);
 
     res.json({
